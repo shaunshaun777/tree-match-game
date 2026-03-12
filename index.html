@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="种树消消乐 - 边玩游戏边种树，打造你的虚拟森林！">
+  <meta name="keywords" content="消除游戏,三消游戏,种树,休闲游戏">
+  <title>🌳 种树消消乐 - 边玩边种树</title>
+
+  <!-- Google AdSense 代码 - 替换成你的发布商ID -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+     crossorigin="anonymous"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 10px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 15px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      max-width: 600px;
+      width: 100%;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2E7D32;
+      margin-bottom: 10px;
+      font-size: clamp(18px, 5vw, 24px);
+    }
+
+    /* 顶部横幅广告位 */
+    .ad-banner-top {
+      min-height: 90px;
+      margin-bottom: 15px;
+      background: #F5F5F5;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      background: #F1F8E9;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: clamp(20px, 5vw, 28px);
+      font-weight: bold;
+      color: #2E7D32;
+    }
+
+    .stat-label {
+      font-size: clamp(10px, 3vw, 12px);
+      color: #666;
+      margin-top: 2px;
+    }
+
+    #gameBoard {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: clamp(2px, 0.5vw, 4px);
+      background: #C8E6C9;
+      padding: 8px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      aspect-ratio: 1;
+      max-width: 100%;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      background: white;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(20px, 5vw, 32px);
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+      border: 2px solid transparent;
+      touch-action: manipulation;
+    }
+
+    .cell:active {
+      transform: scale(0.95);
+    }
+
+    .cell.selected {
+      border: 3px solid #FF5722 !important;
+      background: #FFE0B2 !important;
+      box-shadow: 0 0 15px rgba(255, 87, 34, 0.8);
+      transform: scale(1.1);
+    }
+
+    /* 树木进度面板 */
+    .tree-panel {
+      background: linear-gradient(135deg, #F1F8E9, #DCEDC8);
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .tree-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    .progress-container {
+      background: #E0E0E0;
+      height: 24px;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 10px;
+      position: relative;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #4CAF50, #66BB6A);
+      transition: width 0.5s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    .water-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: linear-gradient(135deg, #4CAF50, #66BB6A);
+      color: white;
+      margin-bottom: 8px;
+    }
+
+    .water-btn:disabled {
+      background: #CCCCCC;
+      cursor: not-allowed;
+    }
+
+    .water-btn:not(:disabled):active {
+      transform: translateY(2px);
+    }
+
+    /* 底部广告位 */
+    .ad-banner-bottom {
+      min-height: 90px;
+      margin-top: 15px;
+      background: #F5F5F5;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* 激励视频广告按钮 */
+    .reward-ad-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      background: linear-gradient(135deg, #FF9800, #FFB74D);
+      color: white;
+      margin-bottom: 10px;
+      transition: all 0.3s;
+    }
+
+    .reward-ad-btn:active {
+      transform: scale(0.98);
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: linear-gradient(135deg, #2196F3, #42A5F5);
+      color: white;
+    }
+
+    button:active {
+      transform: translateY(2px);
+    }
+
+    /* 响应式设计 */
+    @media (min-width: 600px) {
+      .cell:hover {
+        transform: scale(1.1);
+        background: #E8F5E9;
+        border-color: #4CAF50;
+      }
+
+      button:hover, .water-btn:not(:disabled):hover, .reward-ad-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      }
+    }
+
+    /* 模态框 */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      max-width: 90%;
+      width: 350px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .modal-title {
+      font-size: 28px;
+      margin-bottom: 15px;
+    }
+
+    .modal-text {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .modal-btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      background: #4CAF50;
+      color: white;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    .ad-placeholder {
+      color: #999;
+      font-size: 12px;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌳 种树消消乐 🌳</h1>
+
+    <!-- 顶部广告位 -->
+    <div class="ad-banner-top">
+      <!-- Google AdSense 横幅广告 -->
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+           data-ad-slot="YYYYYYYYYY"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+      <!-- 如果还没有AdSense，显示占位符 -->
+      <div class="ad-placeholder">广告位 - 728x90</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-item">
+        <div class="stat-value" id="score">0</div>
+        <div class="stat-label">分数</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="energy">0</div>
+        <div class="stat-label">⚡ 能量</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="moves">30</div>
+        <div class="stat-label">步数</div>
+      </div>
+    </div>
+
+    <div id="gameBoard"></div>
+
+    <!-- 树木面板 -->
+    <div class="tree-panel">
+      <div class="tree-icon" id="treeIcon">🌰</div>
+      <div class="progress-container">
+        <div class="progress-bar" id="progressBar" style="width: 0%">
+          <span id="progressText">0%</span>
+        </div>
+      </div>
+      <button class="water-btn" id="waterBtn" disabled>💧 浇水 (需要50能量)</button>
+    </div>
+
+    <!-- 激励视频广告按钮 -->
+    <button class="reward-ad-btn" onclick="showRewardedAd()">
+      📺 看广告获得50能量 +50⚡
+    </button>
+
+    <button onclick="restartGame()">🔄 重新开始</button>
+
+    <!-- 底部广告位 -->
+    <div class="ad-banner-bottom">
+      <!-- Google AdSense 横幅广告 -->
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+           data-ad-slot="ZZZZZZZZZZ"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+      <!-- 如果还没有AdSense，显示占位符 -->
+      <div class="ad-placeholder">广告位 - 728x90</div>
+    </div>
+  </div>
+
+  <!-- 模态框 -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <div class="modal-title" id="modalTitle">🎉</div>
+      <div class="modal-text" id="modalText"></div>
+      <button class="modal-btn" onclick="closeModal()">确定</button>
+    </div>
+  </div>
+
+  <script>
+    // 游戏数据
+    const ELEMENTS = ['🌰', '💧', '☀️', '🍃', '🌸', '🍇'];
+    const GRID_SIZE = 8;
+    const TREE_STAGES = ['🌰', '🌱', '🌿', '🌲', '🌳'];
+    const TREE_MAX = 500;
+
+    let grid = [];
+    let selected = null;
+    let score = 0;
+    let energy = 0;
+    let moves = 30;
+    let treeEnergy = 0;
+    let animating = false;
+
+    // 初始化游戏
+    function init() {
+      const board = document.getElementById('gameBoard');
+      board.innerHTML = '';
+      grid = [];
+
+      for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.index = i;
+
+        cell.addEventListener('click', function() {
+          if (!animating) handleClick(i);
+        });
+
+        board.appendChild(cell);
+
+        const element = ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)];
+        grid.push(element);
+        cell.textContent = element;
+      }
+
+      updateDisplay();
+    }
+
+    // 渲染网格
+    function render() {
+      const cells = document.querySelectorAll('.cell');
+      cells.forEach((cell, i) => {
+        cell.textContent = grid[i] || '';
+        if (i === selected) {
+          cell.classList.add('selected');
+        } else {
+          cell.classList.remove('selected');
+        }
+      });
+    }
+
+    // 处理点击
+    function handleClick(index) {
+      if (moves <= 0) return;
+
+      if (selected === null) {
+        selected = index;
+        render();
+      } else if (selected === index) {
+        selected = null;
+        render();
+      } else {
+        const r1 = Math.floor(selected / GRID_SIZE);
+        const c1 = selected % GRID_SIZE;
+        const r2 = Math.floor(index / GRID_SIZE);
+        const c2 = index % GRID_SIZE;
+
+        const isAdjacent = (Math.abs(r1 - r2) === 1 && c1 === c2) ||
+                          (Math.abs(c1 - c2) === 1 && r1 === r2);
+
+        if (isAdjacent) {
+          animating = true;
+          [grid[selected], grid[index]] = [grid[index], grid[selected]];
+          render();
+
+          setTimeout(() => {
+            if (checkAndRemoveMatches()) {
+              moves--;
+            } else {
+              [grid[selected], grid[index]] = [grid[index], grid[selected]];
+              render();
+            }
+            selected = null;
+            animating = false;
+            render();
+            updateDisplay();
+          }, 300);
+        } else {
+          selected = null;
+          render();
+        }
+      }
+    }
+
+    // 检查并移除匹配
+    function checkAndRemoveMatches() {
+      const matches = findMatches();
+      if (matches.length === 0) return false;
+
+      score += matches.length * 10;
+      energy += matches.length * 2;
+
+      matches.forEach(i => grid[i] = null);
+      render();
+
+      setTimeout(() => {
+        dropElements();
+        fillEmpty();
+        render();
+
+        setTimeout(() => {
+          if (checkAndRemoveMatches()) {
+            console.log('连锁反应！');
+          } else {
+            checkGameOver();
+          }
+        }, 300);
+      }, 300);
+
+      return true;
+    }
+
+    // 查找匹配
+    function findMatches() {
+      const matches = new Set();
+
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          const idx = r * GRID_SIZE + c;
+          const element = grid[idx];
+          if (!element) continue;
+
+          let count = 1;
+          for (let i = c + 1; i < GRID_SIZE && grid[r * GRID_SIZE + i] === element; i++) {
+            count++;
+          }
+          if (count >= 3) {
+            for (let i = 0; i < count; i++) {
+              matches.add(r * GRID_SIZE + c + i);
+            }
+          }
+        }
+      }
+
+      for (let c = 0; c < GRID_SIZE; c++) {
+        for (let r = 0; r < GRID_SIZE; r++) {
+          const idx = r * GRID_SIZE + c;
+          const element = grid[idx];
+          if (!element) continue;
+
+          let count = 1;
+          for (let i = r + 1; i < GRID_SIZE && grid[i * GRID_SIZE + c] === element; i++) {
+            count++;
+          }
+          if (count >= 3) {
+            for (let i = 0; i < count; i++) {
+              matches.add((r + i) * GRID_SIZE + c);
+            }
+          }
+        }
+      }
+
+      return Array.from(matches);
+    }
+
+    // 元素下落
+    function dropElements() {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        let writePos = GRID_SIZE - 1;
+        for (let r = GRID_SIZE - 1; r >= 0; r--) {
+          const idx = r * GRID_SIZE + c;
+          if (grid[idx]) {
+            const writeIdx = writePos * GRID_SIZE + c;
+            if (idx !== writeIdx) {
+              grid[writeIdx] = grid[idx];
+              grid[idx] = null;
+            }
+            writePos--;
+          }
+        }
+      }
+    }
+
+    // 填充空位
+    function fillEmpty() {
+      for (let i = 0; i < grid.length; i++) {
+        if (!grid[i]) {
+          grid[i] = ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)];
+        }
+      }
+    }
+
+    // 浇水
+    function waterTree() {
+      if (energy < 50) {
+        showModal('⚠️ 能量不足', '你需要至少50能量才能浇水！\n\n可以通过消除获得能量，或者观看广告获得50能量。');
+        return;
+      }
+
+      if (treeEnergy >= TREE_MAX) {
+        showModal('🌳 树已完全成长', '恭喜！你的树已经完全成长了！\n\n重新开始游戏种植新的树吧！');
+        return;
+      }
+
+      energy -= 50;
+      treeEnergy = Math.min(treeEnergy + 50, TREE_MAX);
+      updateDisplay();
+
+      if (treeEnergy >= TREE_MAX) {
+        setTimeout(() => {
+          showModal('🎉 树木成长完成！', `恭喜你成功种植了一棵大树！\n\n最终得分: ${score}\n剩余能量: ${energy}⚡`);
+        }, 500);
+      }
+    }
+
+    // 激励视频广告（模拟）
+    function showRewardedAd() {
+      // TODO: 这里接入真实的广告SDK
+      // 目前是模拟广告观看
+
+      showModal('📺 观看广告', '模拟观看广告中...\n\n（接入AdSense后会显示真实广告）\n\n获得50能量！', () => {
+        energy += 50;
+        updateDisplay();
+      });
+    }
+
+    // 更新显示
+    function updateDisplay() {
+      document.getElementById('score').textContent = score;
+      document.getElementById('energy').textContent = energy;
+      document.getElementById('moves').textContent = moves;
+
+      // 更新树木显示
+      const stage = Math.min(Math.floor(treeEnergy / TREE_MAX * 5), 4);
+      document.getElementById('treeIcon').textContent = TREE_STAGES[stage];
+
+      // 更新进度条
+      const progress = Math.min(treeEnergy / TREE_MAX * 100, 100);
+      document.getElementById('progressBar').style.width = progress + '%';
+      document.getElementById('progressText').textContent = Math.floor(progress) + '%';
+
+      // 更新浇水按钮
+      const waterBtn = document.getElementById('waterBtn');
+      waterBtn.disabled = energy < 50;
+      waterBtn.textContent = energy >= 50 ? '💧 浇水 (消耗50能量)' : '💧 浇水 (需要50能量)';
+    }
+
+    // 检查游戏结束
+    function checkGameOver() {
+      if (score >= 1000) {
+        showModal('🎉 关卡完成！', `恭喜过关！\n\n得分: ${score}\n获得能量: ${energy}⚡\n\n继续游戏或重新开始！`);
+      } else if (moves <= 0) {
+        showModal('😢 游戏结束', `本局游戏结束！\n\n得分: ${score}\n\n点击"重新开始"继续游戏`);
+      }
+    }
+
+    // 显示模态框
+    function showModal(title, text, callback) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalText').textContent = text;
+      document.getElementById('modal').style.display = 'flex';
+
+      if (callback) {
+        window.modalCallback = callback;
+      }
+    }
+
+    // 关闭模态框
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+      if (window.modalCallback) {
+        window.modalCallback();
+        window.modalCallback = null;
+      }
+    }
+
+    // 重新开始
+    function restartGame() {
+      score = 0;
+      energy = 0;
+      moves = 30;
+      treeEnergy = 0;
+      selected = null;
+      animating = false;
+      init();
+    }
+
+    // 浇水按钮事件
+    document.getElementById('waterBtn').addEventListener('click', waterTree);
+
+    // 启动游戏
+    init();
+  </script>
+</body>
+</html>

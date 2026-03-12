@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌳 种树消消乐 - 简化版</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      max-width: 520px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2E7D32;
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #66BB6A;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      background: #F1F8E9;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #2E7D32;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+    }
+
+    #gameBoard {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 4px;
+      background: #C8E6C9;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      background: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .cell:hover {
+      transform: scale(1.05);
+      background: #E8F5E9;
+    }
+
+    .cell.selected {
+      border: 3px solid #FF5722;
+      box-shadow: 0 0 10px rgba(255, 87, 34, 0.5);
+    }
+
+    .tree-panel {
+      background: #F1F8E9;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .tree-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 25px;
+      background: #E0E0E0;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #66BB6A, #4CAF50);
+      transition: width 0.5s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 10px;
+      transition: all 0.3s;
+    }
+
+    .btn-water {
+      background: linear-gradient(135deg, #4CAF50, #66BB6A);
+      color: white;
+    }
+
+    .btn-water:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      text-align: center;
+      max-width: 300px;
+    }
+
+    .emoji-big {
+      font-size: 60px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌳 种树消消乐 🌳</h1>
+    <p class="subtitle">消除获得能量，种植你的森林！</p>
+
+    <div class="stats">
+      <div class="stat-item">
+        <div class="stat-value" id="score">0</div>
+        <div class="stat-label">分数</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="energy">0</div>
+        <div class="stat-label">⚡ 能量</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="moves">30</div>
+        <div class="stat-label">步数</div>
+      </div>
+    </div>
+
+    <div id="gameBoard"></div>
+
+    <div class="tree-panel">
+      <div class="tree-icon" id="treeIcon">🌱</div>
+      <div><strong>小松树</strong></div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+      </div>
+      <button class="btn-water" onclick="waterTree()">💧 浇水 (消耗 50 能量)</button>
+    </div>
+  </div>
+
+  <!-- 关卡完成弹窗 -->
+  <div class="modal" id="modalWin">
+    <div class="modal-content">
+      <div class="emoji-big">🎉</div>
+      <h2>关卡完成！</h2>
+      <p>得分: <span id="winScore">0</span></p>
+      <p>获得能量: <span id="winEnergy">0</span> ⚡</p>
+      <button class="btn-water" onclick="nextLevel()">下一关</button>
+    </div>
+  </div>
+
+  <!-- 树木完成弹窗 -->
+  <div class="modal" id="modalTree">
+    <div class="modal-content">
+      <div class="emoji-big">🌳</div>
+      <h2>树木成长完成！</h2>
+      <p>恭喜你成功种植了一棵大树！</p>
+      <button class="btn-water" onclick="plantNewTree()">种植新树</button>
+    </div>
+  </div>
+
+  <script>
+    // 游戏数据
+    const ELEMENTS = ['🌰', '💧', '☀️', '🍃', '🌸', '🍇'];
+    const GRID_SIZE = 8;
+    let grid = [];
+    let selected = null;
+    let score = 0;
+    let energy = 0;
+    let moves = 30;
+    let treeEnergy = 0;
+    const TREE_MAX = 500;
+    const TREE_STAGES = ['🌰', '🌱', '🌿', '🌲', '🌳'];
+
+    // 初始化游戏
+    function init() {
+      // 创建网格
+      const board = document.getElementById('gameBoard');
+      board.innerHTML = '';
+      grid = [];
+
+      for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.index = i;
+        cell.onclick = () => handleClick(i);
+        board.appendChild(cell);
+
+        const element = ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)];
+        grid.push(element);
+        cell.textContent = element;
+      }
+
+      // 确保没有初始匹配
+      while (hasMatches()) {
+        shuffle();
+      }
+
+      updateDisplay();
+    }
+
+    // 打乱网格
+    function shuffle() {
+      for (let i = grid.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [grid[i], grid[j]] = [grid[j], grid[i]];
+      }
+      render();
+    }
+
+    // 渲染网格
+    function render() {
+      const cells = document.querySelectorAll('.cell');
+      cells.forEach((cell, i) => {
+        cell.textContent = grid[i] || '';
+      });
+    }
+
+    // 处理点击
+    function handleClick(index) {
+      if (moves <= 0) return;
+
+      const cells = document.querySelectorAll('.cell');
+
+      if (selected === null) {
+        // 选中第一个
+        selected = index;
+        cells[index].classList.add('selected');
+      } else {
+        // 点击第二个
+        cells[selected].classList.remove('selected');
+
+        if (isAdjacent(selected, index)) {
+          // 交换
+          [grid[selected], grid[index]] = [grid[index], grid[selected]];
+          render();
+
+          setTimeout(() => {
+            if (checkAndRemoveMatches()) {
+              moves--;
+              updateDisplay();
+            } else {
+              // 交换回来
+              [grid[selected], grid[index]] = [grid[index], grid[selected]];
+              render();
+            }
+            selected = null;
+          }, 200);
+        } else {
+          selected = null;
+        }
+      }
+    }
+
+    // 检查相邻
+    function isAdjacent(i1, i2) {
+      const r1 = Math.floor(i1 / GRID_SIZE);
+      const c1 = i1 % GRID_SIZE;
+      const r2 = Math.floor(i2 / GRID_SIZE);
+      const c2 = i2 % GRID_SIZE;
+
+      return (Math.abs(r1 - r2) === 1 && c1 === c2) ||
+             (Math.abs(c1 - c2) === 1 && r1 === r2);
+    }
+
+    // 检查并移除匹配
+    function checkAndRemoveMatches() {
+      const matches = findMatches();
+      if (matches.length === 0) return false;
+
+      // 计算得分
+      const count = matches.length;
+      score += count * 10;
+      energy += count * 2;
+
+      // 移除匹配
+      matches.forEach(i => grid[i] = null);
+      render();
+
+      setTimeout(() => {
+        dropElements();
+        fillEmpty();
+        render();
+
+        setTimeout(() => {
+          if (checkAndRemoveMatches()) {
+            // 连锁反应
+          } else {
+            checkWin();
+          }
+        }, 300);
+      }, 300);
+
+      return true;
+    }
+
+    // 查找匹配
+    function findMatches() {
+      const matches = new Set();
+
+      // 横向检查
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE - 2; c++) {
+          const idx = r * GRID_SIZE + c;
+          const element = grid[idx];
+          if (!element) continue;
+
+          let count = 1;
+          for (let i = c + 1; i < GRID_SIZE && grid[r * GRID_SIZE + i] === element; i++) {
+            count++;
+          }
+
+          if (count >= 3) {
+            for (let i = 0; i < count; i++) {
+              matches.add(r * GRID_SIZE + c + i);
+            }
+          }
+        }
+      }
+
+      // 纵向检查
+      for (let c = 0; c < GRID_SIZE; c++) {
+        for (let r = 0; r < GRID_SIZE - 2; r++) {
+          const idx = r * GRID_SIZE + c;
+          const element = grid[idx];
+          if (!element) continue;
+
+          let count = 1;
+          for (let i = r + 1; i < GRID_SIZE && grid[i * GRID_SIZE + c] === element; i++) {
+            count++;
+          }
+
+          if (count >= 3) {
+            for (let i = 0; i < count; i++) {
+              matches.add((r + i) * GRID_SIZE + c);
+            }
+          }
+        }
+      }
+
+      return Array.from(matches);
+    }
+
+    // 检查是否有匹配
+    function hasMatches() {
+      return findMatches().length > 0;
+    }
+
+    // 元素下落
+    function dropElements() {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        let writePos = GRID_SIZE - 1;
+        for (let r = GRID_SIZE - 1; r >= 0; r--) {
+          const idx = r * GRID_SIZE + c;
+          if (grid[idx]) {
+            const writeIdx = writePos * GRID_SIZE + c;
+            if (idx !== writeIdx) {
+              grid[writeIdx] = grid[idx];
+              grid[idx] = null;
+            }
+            writePos--;
+          }
+        }
+      }
+    }
+
+    // 填充空位
+    function fillEmpty() {
+      for (let i = 0; i < grid.length; i++) {
+        if (!grid[i]) {
+          grid[i] = ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)];
+        }
+      }
+    }
+
+    // 更新显示
+    function updateDisplay() {
+      document.getElementById('score').textContent = score;
+      document.getElementById('energy').textContent = energy;
+      document.getElementById('moves').textContent = moves;
+
+      // 更新树木
+      const progress = Math.min(treeEnergy / TREE_MAX * 100, 100);
+      document.getElementById('progressFill').style.width = progress + '%';
+      document.getElementById('progressFill').textContent = Math.floor(progress) + '%';
+
+      const stage = Math.floor(treeEnergy / TREE_MAX * 4);
+      document.getElementById('treeIcon').textContent = TREE_STAGES[Math.min(stage, 4)];
+    }
+
+    // 浇水
+    function waterTree() {
+      if (energy < 50) {
+        alert('能量不足！需要 50 能量。\n\n继续消除获得更多能量！');
+        return;
+      }
+
+      if (treeEnergy >= TREE_MAX) {
+        alert('这棵树已经完全成长了！');
+        return;
+      }
+
+      energy -= 50;
+      treeEnergy += 50;
+      updateDisplay();
+
+      if (treeEnergy >= TREE_MAX) {
+        setTimeout(() => {
+          document.getElementById('modalTree').classList.add('active');
+        }, 500);
+      }
+    }
+
+    // 种植新树
+    function plantNewTree() {
+      document.getElementById('modalTree').classList.remove('active');
+      treeEnergy = 0;
+      updateDisplay();
+    }
+
+    // 检查胜利
+    function checkWin() {
+      if (score >= 1000) {
+        document.getElementById('winScore').textContent = score;
+        document.getElementById('winEnergy').textContent = energy;
+        document.getElementById('modalWin').classList.add('active');
+      } else if (moves <= 0) {
+        alert('游戏结束！\n得分: ' + score + '\n\n点击确定重新开始');
+        restartGame();
+      }
+    }
+
+    // 下一关
+    function nextLevel() {
+      document.getElementById('modalWin').classList.remove('active');
+      score = 0;
+      moves = 30;
+      init();
+    }
+
+    // 重新开始
+    function restartGame() {
+      score = 0;
+      energy = 0;
+      moves = 30;
+      treeEnergy = 0;
+      init();
+    }
+
+    // 启动游戏
+    init();
+  </script>
+</body>
+</html>

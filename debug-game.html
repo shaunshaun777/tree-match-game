@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌳 种树消消乐 - 调试版</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      max-width: 520px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2E7D32;
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      background: #F1F8E9;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #2E7D32;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+    }
+
+    #gameBoard {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 4px;
+      background: #C8E6C9;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      background: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+      border: 2px solid transparent;
+    }
+
+    .cell:hover {
+      transform: scale(1.1);
+      background: #E8F5E9;
+      border-color: #4CAF50;
+    }
+
+    .cell:active {
+      transform: scale(0.95);
+    }
+
+    .cell.selected {
+      border: 3px solid #FF5722 !important;
+      background: #FFE0B2 !important;
+      box-shadow: 0 0 15px rgba(255, 87, 34, 0.8);
+      transform: scale(1.15);
+    }
+
+    .debug {
+      background: #FFF9C4;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 12px;
+      font-family: monospace;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 10px;
+      transition: all 0.3s;
+      background: linear-gradient(135deg, #4CAF50, #66BB6A);
+      color: white;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌳 种树消消乐 - 调试版 🌳</h1>
+    
+    <div class="debug" id="debug">
+      等待操作...
+    </div>
+
+    <div class="stats">
+      <div class="stat-item">
+        <div class="stat-value" id="score">0</div>
+        <div class="stat-label">分数</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="energy">0</div>
+        <div class="stat-label">⚡ 能量</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="moves">30</div>
+        <div class="stat-label">步数</div>
+      </div>
+    </div>
+
+    <div id="gameBoard"></div>
+
+    <button onclick="restartGame()">🔄 重新开始</button>
+  </div>
+
+  <script>
+    // 游戏数据
+    const ELEMENTS = ['🌰', '💧', '☀️', '🍃', '🌸', '🍇'];
+    const GRID_SIZE = 8;
+    let grid = [];
+    let selected = null;
+    let score = 0;
+    let energy = 0;
+    let moves = 30;
+
+    // 调试日志
+    function debug(msg) {
+      const debugDiv = document.getElementById('debug');
+      debugDiv.textContent = msg;
+      console.log('DEBUG:', msg);
+    }
+
+    // 初始化游戏
+    function init() {
+      debug('初始化游戏...');
+      const board = document.getElementById('gameBoard');
+      board.innerHTML = '';
+      grid = [];
+
+      for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.index = i;
+        
+        // 添加点击事件
+        cell.addEventListener('click', function() {
+          handleClick(i);
+        });
+        
+        board.appendChild(cell);
+
+        const element = ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)];
+        grid.push(element);
+        cell.textContent = element;
+      }
+
+      debug('游戏初始化完成！点击任意格子开始');
+      updateDisplay();
+    }
+
+    // 渲染网格
+    function render() {
+      const cells = document.querySelectorAll('.cell');
+      cells.forEach((cell, i) => {
+        cell.textContent = grid[i] || '';
+        if (i === selected) {
+          cell.classList.add('selected');
+        } else {
+          cell.classList.remove('selected');
+        }
+      });
+    }
+
+    // 处理点击
+    function handleClick(index) {
+      debug(`点击了格子 ${index} (${grid[index]})`);
+
+      if (moves <= 0) {
+        debug('步数用完了！');
+        return;
+      }
+
+      if (selected === null) {
+        // 第一次点击 - 选中
+        selected = index;
+        debug(`✅ 选中格子 ${index}: ${grid[index]}`);
+        render();
+      } else if (selected === index) {
+        // 点击同一个格子 - 取消选中
+        selected = null;
+        debug('取消选中');
+        render();
+      } else {
+        // 第二次点击 - 尝试交换
+        const r1 = Math.floor(selected / GRID_SIZE);
+        const c1 = selected % GRID_SIZE;
+        const r2 = Math.floor(index / GRID_SIZE);
+        const c2 = index % GRID_SIZE;
+
+        const isAdjacent = (Math.abs(r1 - r2) === 1 && c1 === c2) ||
+                          (Math.abs(c1 - c2) === 1 && r1 === r2);
+
+        if (isAdjacent) {
+          debug(`🔄 交换格子 ${selected} 和 ${index}`);
+          
+          // 交换
+          [grid[selected], grid[index]] = [grid[index], grid[selected]];
+          render();
+
+          setTimeout(() => {
+            const matched = checkAndRemoveMatches();
+            if (matched) {
+              debug(`✨ 消除成功！获得分数和能量`);
+              moves--;
+            } else {
+              debug(`❌ 无法消除，交换回来`);
+              // 交换回来
+              [grid[selected], grid[index]] = [grid[index], grid[selected]];
+              render();
+            }
+            selected = null;
+            render();
+            updateDisplay();
+          }, 300);
+        } else {
+          debug(`⚠️ 格子 ${selected} 和 ${index} 不相邻！请选择相邻的格子`);
+          selected = null;
+          render();
+        }
+      }
+    }
+
+    // 检查并移除匹配
+    function checkAndRemoveMatches() {
+      const matches = findMatches();
+      
+      if (matches.length === 0) {
+        return false;
+      }
+
+      debug(`找到 ${matches.length} 个匹配的格子`);
+
+      // 计算得分
+      score += matches.length * 10;
+      energy += matches.length * 2;
+
+      // 移除匹配
+      matches.forEach(i => grid[i] = null);
+      render();
+
+      setTimeout(() => {
+        dropElements();
+        fillEmpty();
+        render();
+        
+        // 检查连锁反应
+        setTimeout(() => {
+          if (checkAndRemoveMatches()) {
+            debug('💥 连锁反应！');
+          } else {
+            checkGameOver();
+          }
+        }, 300);
+      }, 300);
+
+      return true;
+    }
+
+    // 查找匹配
+    function findMatches() {
+      const matches = new Set();
+
+      // 横向检查
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          const idx = r * GRID_SIZE + c;
+          const element = grid[idx];
+          if (!element) continue;
+
+          // 向右检查
+          let count = 1;
+          for (let i = c + 1; i < GRID_SIZE && grid[r * GRID_SIZE + i] === element; i++) {
+            count++;
+          }
+
+          if (count >= 3) {
+            for (let i = 0; i < count; i++) {
+              matches.add(r * GRID_SIZE + c + i);
+            }
+          }
+        }
+      }
+
+      // 纵向检查
+      for (let c = 0; c < GRID_SIZE; c++) {
+        for (let r = 0; r < GRID_SIZE; r++) {
+          const idx = r * GRID_SIZE + c;
+          const element = grid[idx];
+          if (!element) continue;
+
+          // 向下检查
+          let count = 1;
+          for (let i = r + 1; i < GRID_SIZE && grid[i * GRID_SIZE + c] === element; i++) {
+            count++;
+          }
+
+          if (count >= 3) {
+            for (let i = 0; i < count; i++) {
+              matches.add((r + i) * GRID_SIZE + c);
+            }
+          }
+        }
+      }
+
+      return Array.from(matches);
+    }
+
+    // 元素下落
+    function dropElements() {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        let writePos = GRID_SIZE - 1;
+        for (let r = GRID_SIZE - 1; r >= 0; r--) {
+          const idx = r * GRID_SIZE + c;
+          if (grid[idx]) {
+            const writeIdx = writePos * GRID_SIZE + c;
+            if (idx !== writeIdx) {
+              grid[writeIdx] = grid[idx];
+              grid[idx] = null;
+            }
+            writePos--;
+          }
+        }
+      }
+    }
+
+    // 填充空位
+    function fillEmpty() {
+      for (let i = 0; i < grid.length; i++) {
+        if (!grid[i]) {
+          grid[i] = ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)];
+        }
+      }
+    }
+
+    // 更新显示
+    function updateDisplay() {
+      document.getElementById('score').textContent = score;
+      document.getElementById('energy').textContent = energy;
+      document.getElementById('moves').textContent = moves;
+    }
+
+    // 检查游戏结束
+    function checkGameOver() {
+      if (score >= 1000) {
+        debug(`🎉 恭喜过关！得分: ${score}, 能量: ${energy}`);
+        alert(`🎉 恭喜过关！\n\n得分: ${score}\n获得能量: ${energy} ⚡`);
+      } else if (moves <= 0) {
+        debug(`😢 游戏结束！得分: ${score}`);
+        alert(`😢 游戏结束！\n\n得分: ${score}\n\n点击"重新开始"继续游戏`);
+      }
+    }
+
+    // 重新开始
+    function restartGame() {
+      score = 0;
+      energy = 0;
+      moves = 30;
+      selected = null;
+      init();
+    }
+
+    // 启动游戏
+    init();
+  </script>
+</body>
+</html>

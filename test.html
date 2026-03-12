@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>游戏测试</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #E8F5E9;
+      margin: 0;
+      font-family: Arial;
+    }
+    #gameCanvas {
+      border: 3px solid #4CAF50;
+      background: white;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <h2 style="text-align: center; color: #2E7D32;">🌳 种树消消乐 - 测试版 🌳</h2>
+    <canvas id="gameCanvas" width="500" height="700"></canvas>
+    <div style="margin-top: 10px; text-align: center;">
+      <button onclick="testGame()" style="padding: 10px 20px; font-size: 16px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">
+        开始测试
+      </button>
+    </div>
+  </div>
+
+  <script>
+    console.log('页面加载完成');
+    
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    console.log('Canvas:', canvas);
+    console.log('Context:', ctx);
+    
+    // 测试绘制
+    function testDraw() {
+      // 清空画布
+      ctx.fillStyle = '#E8F5E9';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // 绘制测试文字
+      ctx.fillStyle = '#2E7D32';
+      ctx.font = 'bold 24px Arial';
+      ctx.fillText('Canvas 工作正常！', 120, 50);
+      
+      // 绘制网格
+      const gridSize = 8;
+      const cellSize = 60;
+      const padding = 0;
+      const startY = 100;
+      
+      // 测试 emoji 数组
+      const emojis = ['🌰', '💧', '☀️', '🍃', '🌸', '🌰'];
+      
+      for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
+          const x = padding + col * cellSize;
+          const y = startY + row * cellSize;
+          
+          // 绘制格子背景
+          ctx.fillStyle = '#C8E6C9';
+          ctx.fillRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+          
+          // 随机选择 emoji
+          const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+          
+          // 绘制 emoji
+          ctx.font = '36px Arial';
+          ctx.fillText(emoji, x + cellSize / 2 - 18, y + cellSize / 2 + 12);
+        }
+      }
+      
+      console.log('绘制完成！');
+    }
+    
+    function testGame() {
+      console.log('开始测试...');
+      testDraw();
+    }
+    
+    // 自动测试
+    window.addEventListener('load', () => {
+      console.log('Window loaded, 开始自动绘制...');
+      setTimeout(testDraw, 100);
+    });
+  </script>
+</body>
+</html>
